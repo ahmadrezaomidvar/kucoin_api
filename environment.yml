@@ -1,0 +1,8 @@
+name: kucoin
+dependencies:
+  - python=3.8
+  - pip
+  - pip:
+    - pyyaml==5.4.1
+    - kucoin-python==1.0.9
+
