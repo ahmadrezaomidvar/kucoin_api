@@ -128,7 +128,7 @@ class TradeAPI():
                 else:
                     prev_filled_date = now+datetime.timedelta(days=-10)
 
-                if now <= prev_filled_date+datetime.timedelta(days=-7):
+                if now <= prev_filled_date+datetime.timedelta(days=7):
                     self.logger.warning(f"""a {side} filled order found within 7 days of now on {prev_filled_date}, hence {symbol} will be skipped...""")
                     return False
                 return True
