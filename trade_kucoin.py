@@ -52,7 +52,7 @@ class TradeAPI():
             prev_order_ids.append(order['id'])
             prev_stop_price.append(float(order['stopPrice']))
         if prev_stop_price:
-            prev_live_price = prev_stop_price[0]*(1 + token_to_trade['live_stop_limit_percentage'])
+            prev_live_price = (prev_stop_price[0]*(1 + token_to_trade['live_stop_limit_percentage']))*1.015
         else:
             prev_live_price = 0
 
@@ -61,8 +61,8 @@ class TradeAPI():
             self.logger.warning('live price hitted the target...')
 
             # calculating new order details
-            stop_price = float("{0:.4f}".format(live_price * (1 - token_to_trade['live_stop_limit_percentage'])))
-            order_price = float("{0:.4f}".format(stop_price * (1 - token_to_trade['live_stop_limit_percentage'])))
+            stop_price = float("{0:.4f}".format(live_price * (1 - token_to_trade['live_stop_percentage'])))
+            order_price = float("{0:.4f}".format(stop_price * (1 - token_to_trade['stop_limit_percentage'])))
             size = float("{0:.4f}".format(token_to_trade['total_purchase'] / order_price))
 
             if size <= balance:
