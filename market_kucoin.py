@@ -16,6 +16,15 @@ class MarketAPI():
 
         # client loading
         self.market = self._make_market()
+        while True:
+            try:
+                self.symbol_list = self.market.get_symbol_list()
+                break
+            except Exception:
+                self.logger.exception("""symbol list could not be checked successfully. sleeping for few time and try later""", exc_info=False)
+                sleep_time = random.uniform(8, 12)
+                time.sleep(sleep_time)
+                pass
 
 
     def _make_market(self):
@@ -26,7 +35,7 @@ class MarketAPI():
                     market = Market(is_sandbox=True)
                     break
                 except Exception:
-                    self.logger.exception("""market object could not be checked successfully. sleeping for few time and try later""", exc_info=True)
+                    self.logger.exception("""market object could not be checked successfully. sleeping for few time and try later""", exc_info=False)
                     sleep_time = random.uniform(8, 12)
                     time.sleep(sleep_time)
                     pass
@@ -37,7 +46,7 @@ class MarketAPI():
                     market = Market(url='https://api.kucoin.com')
                     break
                 except Exception:
-                    self.logger.exception("""market object could not be checked successfully. sleeping for few time and try later""", exc_info=True)
+                    self.logger.exception("""market object could not be checked successfully. sleeping for few time and try later""", exc_info=False)
                     sleep_time = random.uniform(8, 12)
                     time.sleep(sleep_time)
                     pass
@@ -74,9 +83,14 @@ class MarketAPI():
                 klines = self.market.get_kline(symbol, kline_type, **{'startAt': start_timestamp, 'endAt': end_timestamp})
                 break
             except Exception:
-                self.logger.exception("""kline object could not be checked successfully. sleeping for few time and try later""", exc_info=True)
+                self.logger.exception("""kline object could not be checked successfully. sleeping for few time and try later""", exc_info=False)
                 sleep_time = random.uniform(8, 12)
                 time.sleep(sleep_time)
                 pass
 
         return klines
+
+    def get_symbol_data(self, symbol):
+        for data in self.symbol_list:
+            if data['symbol'] == symbol:
+                return data

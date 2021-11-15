@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+import os
 
 def get_token_meta(token_data):
     purchase = token_data['purchase']
@@ -55,6 +56,7 @@ def load_websocket_data():
     path = Path(__file__).resolve().parents[0].joinpath('websocket_data', 'websocket.json')
     with open(str(path)) as f:
         msg = json.load(f)
-        data = msg['data']
 
-    return data
+    os.remove(path)
+
+    return msg

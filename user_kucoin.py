@@ -33,7 +33,7 @@ class UserAPI():
                 self.logger.info(f'{self.api_name} user in {self.mode} mode created successfully...')
                 break
             except Exception:
-                self.logger.exception("""user object could not be created successfully. sleeping for few time and try later""", exc_info=True)
+                self.logger.exception("""user object could not be created successfully. sleeping for few seconds and try later""", exc_info=False)
                 sleep_time = random.uniform(8, 12)
                 time.sleep(sleep_time)
                 pass
@@ -53,7 +53,7 @@ class UserAPI():
                 self.logger.info(f'ledger for {self.api_name} loaded successfully...')
                 break
             except Exception:
-                self.logger.exception("""ledger object could not be created successfully. sleeping for few time and try later""", exc_info=True)
+                self.logger.exception("""ledger object could not be created successfully. sleeping for few seconds and try later""", exc_info=False)
                 sleep_time = random.uniform(8, 12)
                 time.sleep(sleep_time)
                 pass
