@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+import os
 
 def get_token_meta(token_data):
     purchase = token_data['purchase']
@@ -30,10 +31,9 @@ def get_token_meta(token_data):
     meta_data['target'] = float("{0:.4f}".format(target))
     meta_data['trade_symbol'] = token_data['trade_symbol']
     meta_data['avg_stop_percentage'] = token_data['avg_stop_percentage']
-    meta_data['live_stop_limit_percentage'] = token_data['live_stop_limit_percentage']
+    meta_data['live_stop_percentage'] = token_data['live_stop_percentage']
+    meta_data['stop_limit_percentage'] = token_data['stop_limit_percentage']
     
-
-
     return meta_data
 
 
@@ -56,6 +56,7 @@ def load_websocket_data():
     path = Path(__file__).resolve().parents[0].joinpath('websocket_data', 'websocket.json')
     with open(str(path)) as f:
         msg = json.load(f)
-        data = msg['data']
 
-    return data
+    os.remove(path)
+
+    return msg

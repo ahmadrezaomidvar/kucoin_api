@@ -81,6 +81,7 @@ class auto_sell:
             if tokens[token]['flag']:
                 meta_data = get_token_meta(tokens[token])
                 tokens_meta[token] = meta_data
+        self._logger.info('tokens meta data updated...')
         
         return tokens_meta
 
@@ -94,6 +95,7 @@ class auto_sell:
             for token, data in tokens_meta.items():
                 token_to_trade = data
                 self._logger.info(f"investigating {token_to_trade['trade_symbol']}...")
+                self._logger.info(f'token_meta_data:\n{token_to_trade}')
                 
                 if not self.trade.check_prev_filled_date(token_to_trade['trade_symbol'], 'sell', now):                          # check if previous stop/limit order is filled
                     continue
@@ -102,10 +104,18 @@ class auto_sell:
                 prev_order_data = self.trade.get_token_stop_order_data(token_to_trade['trade_symbol'], 'sell')                  # check active stop order data
                 self._logger.info(f"active stop order data for {token_to_trade['trade_symbol']}: \n{prev_order_data}")
 
-                WebsocketAPI().run(token_to_trade['trade_symbol'], save_websocket_data)                                       # getting the live data
-                token_live_data = load_websocket_data()
+                WebsocketAPI().run(token_to_trade['trade_symbol'], save_websocket_data)                                         # getting and saving the live data
 
-                self.trade.auto_limit_stop_order(token_to_trade, token_live_data, balance, prev_order_data)                     # checking and placing new stop order
+                try:                                                                                                            # loading live data
+                    token_live_data = load_websocket_data()
+                    if token_to_trade['trade_symbol'] not in token_live_data['topic']:
+                        self._logger.error(f'could not load live data...', exc_info=False)
+                        continue
+                except Exception:
+                    self._logger.error(f'could not load live data...', exc_info=False)
+                    continue
+
+                self.trade.auto_limit_stop_order(token_to_trade, token_live_data['data'], balance, prev_order_data)                     # checking and placing new stop order
 
                 sleep_time = random.uniform(8, 12)
                 self._logger.info(f'sleeping for {sleep_time: .2f} seconds\n')

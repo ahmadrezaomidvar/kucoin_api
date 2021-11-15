@@ -3,6 +3,7 @@ import time
 import datetime
 import random
 from kucoin.client import Trade
+from market_kucoin import MarketAPI
 
 class TradeAPI():
     def __init__(self, api_data, api_name, mode='sandbox'):
@@ -24,6 +25,7 @@ class TradeAPI():
         # logger loading
         self.logger = logging.getLogger(__name__)
         self.trade = self._make_trade()
+        self.market = MarketAPI(self.mode)
 
     def _make_trade(self):
         while True:
@@ -32,7 +34,7 @@ class TradeAPI():
                 self.logger.info(f'trade object for {self.api_name} in {self.mode} mode created successfully...')
                 break
             except Exception:
-                self.logger.exception("""trade object could not be created successfully. sleeping for few time and try later""", exc_info=True)
+                self.logger.exception("""trade object could not be created successfully. sleeping for few seconds and try later""", exc_info=False)
                 sleep_time = random.uniform(8, 12)
                 time.sleep(sleep_time)
                 pass
@@ -52,7 +54,7 @@ class TradeAPI():
             prev_order_ids.append(order['id'])
             prev_stop_price.append(float(order['stopPrice']))
         if prev_stop_price:
-            prev_live_price = prev_stop_price[0]*(1 + token_to_trade['live_stop_limit_percentage'])
+            prev_live_price = (prev_stop_price[0]*(1 + token_to_trade['live_stop_percentage']))*1.015
         else:
             prev_live_price = 0
 
@@ -61,8 +63,8 @@ class TradeAPI():
             self.logger.warning('live price hitted the target...')
 
             # calculating new order details
-            stop_price = float("{0:.4f}".format(live_price * (1 - token_to_trade['live_stop_limit_percentage'])))
-            order_price = float("{0:.4f}".format(stop_price * (1 - token_to_trade['live_stop_limit_percentage'])))
+            stop_price = float("{0:.4f}".format(live_price * (1 - token_to_trade['live_stop_percentage'])))
+            order_price = float("{0:.4f}".format(stop_price * (1 - token_to_trade['stop_limit_percentage'])))
             size = float("{0:.4f}".format(token_to_trade['total_purchase'] / order_price))
 
             if size <= balance:
@@ -75,24 +77,22 @@ class TradeAPI():
                                 self.logger.info(f"order {id} cancelled")
                                 break
                             except Exception:
-                                self.logger.exception("""previous order could not be cancelled successfully. sleeping for few time and try later""", exc_info=True)
+                                self.logger.exception("""previous order could not be cancelled successfully. sleeping for few seconds and try later""", exc_info=False)
                                 sleep_time = random.uniform(8, 12)
                                 time.sleep(sleep_time)
                                 pass
                 
                 # placing new stop order
+                size, order_price = self.data_adjustment(token_to_trade['trade_symbol'], size, order_price)
                 self.logger.info(f"""order with following data will be excecuted:
                                     \nlive_price:{float("{0:.4f}".format(live_price))}, stop_price: {stop_price}, order_price: {order_price}, size: {size}""")
-                while True:
-                    try:
-                        self.trade.create_limit_stop_order(token_to_trade['trade_symbol'], 'sell', size, order_price, stop_price)
-                        break
-                    except Exception:
-                        self.logger.exception('new order could not be placed successfully. sleeping for few time and try later', exc_info=True)
-                        sleep_time = random.uniform(8, 12)
-                        time.sleep(sleep_time)
-                        pass
-                self.logger.info(f"stop order for symbol {token_to_trade['trade_symbol']} created successfully...")
+                
+                try:
+                    self.trade.create_limit_stop_order(token_to_trade['trade_symbol'], 'sell', size, order_price, stop_price)
+                    self.logger.info(f"stop order for symbol {token_to_trade['trade_symbol']} created successfully...")
+                except Exception:
+                    self.logger.exception('new order could not be placed successfully...', exc_info=True)
+                    pass
 
             else:
                 self.logger.info(f"""balance is not sufficient to place the order for {token_to_trade['trade_symbol']}:
@@ -108,7 +108,7 @@ class TradeAPI():
                 order_data = self.trade.get_all_stop_order_details(**{'symbol': symbol, 'side': side})['items']
                 break
             except Exception:
-                self.logger.exception("""order_data object could not be created successfully. sleeping for few time and try later""", exc_info=True)
+                self.logger.exception("""order_data object could not be created successfully. sleeping for few seconds and try later""", exc_info=False)
                 sleep_time = random.uniform(8, 12)
                 time.sleep(sleep_time)
                 pass
@@ -134,7 +134,25 @@ class TradeAPI():
                 return True
                 break
             except Exception:
-                self.logger.exception("""prev_filled_date could not be checked successfully. sleeping for few time and try later""", exc_info=True)
+                self.logger.exception("""prev_filled_date could not be checked successfully. sleeping for few seconds and try later""", exc_info=False)
                 sleep_time = random.uniform(8, 12)
                 time.sleep(sleep_time)
                 pass
+
+    def data_adjustment(self, symbol, size, price):
+        while True:
+            try:
+                price_base_data = self.market.get_symbol_data(symbol)
+                break
+            except Exception:
+                self.logger.exception("""symbol_data object could not be loaded successfully. sleeping for few seconds and try later""", exc_info=False)
+                sleep_time = random.uniform(8, 12)
+                time.sleep(sleep_time)
+                pass
+
+        baseIncrement = float(price_base_data['baseIncrement'])
+        priceIncrement = float(price_base_data['priceIncrement'])
+        size = int(size/baseIncrement)*baseIncrement
+        price = int(price/priceIncrement)*priceIncrement
+
+        return size, price

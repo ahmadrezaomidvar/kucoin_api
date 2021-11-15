@@ -52,7 +52,8 @@ a tokens.json file shall be created in following format:
             },
             "target_percentage": 0.8,           # N/A for this version 
             "avg_stop_percentage": 0.25,        # target percentage to perform checking start
-            "live_stop_limit_percentage": 0.07, # percentage to place stop below live price
+            "live_stop_percentage": 0.10,       # percentage to place stop below live price
+            "stop_limit_percentage": 0.05,      # percentage to place order below stop price
             "base_curr": "USDT",                # base currency
             "trade_symbol": "KCS-USDT",         # trade symbol
             "custom_sell_USDT": 1000,           # N/A for this version
