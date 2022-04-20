@@ -154,5 +154,6 @@ class TradeAPI():
         priceIncrement = float(price_base_data['priceIncrement'])
         size = int(size/baseIncrement)*baseIncrement
         price = int(price/priceIncrement)*priceIncrement
+        size= float("{0:.4f}".format(size))
 
         return size, price
